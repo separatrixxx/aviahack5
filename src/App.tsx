@@ -1,10 +1,10 @@
 import React from 'react';
-import Home from './pages/Home'
-import Tasks from './pages/Tasks'
-import Start from './pages/Start'
-import End from './pages/End'
-import Profile from './pages/Profile'
-import NotFound from './pages/NotFound'
+import Home from './pages/Home';
+import Tasks from './pages/Tasks';
+import Start from './pages/Start';
+import End from './pages/End';
+import Profile from './pages/Profile';
+import NotFound from './pages/NotFound';
 
 
 import {BrowserRouter as Router, Route, Routes} from "react-router-dom";
