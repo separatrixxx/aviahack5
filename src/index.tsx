@@ -25,14 +25,14 @@ input?.addEventListener('keypress', async function (e) {
 
             for (let i of json['list']) {
                 if (val === i.token) {
-                    localStorage.setItem('token_enter', 'ok');
+                    localStorage.setItem('token', val);
                     input.classList.remove('border-4');
                     input.classList.remove('border-red-300');
                     window.location.reload();
                     break;
                 }
 
-                localStorage.removeItem('token_enter');
+                localStorage.removeItem('token');
                 input.classList.add('border-4');
                 input.classList.add('border-red-500');
             }
@@ -41,3 +41,6 @@ input?.addEventListener('keypress', async function (e) {
         }
     }
 });
+
+let tokenName = document.getElementById('token_name') as HTMLInputElement;
+tokenName.innerHTML = 'Ваш токен: ' + localStorage.getItem('token')?.toUpperCase();
