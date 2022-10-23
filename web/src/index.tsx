@@ -94,6 +94,8 @@ let acceptTaskBtn = document.getElementById('accept_task_btn') as HTMLInputEleme
 let endTaskBtn = document.getElementById('end_task_btn') as HTMLInputElement;
 let errorTaskBtn = document.getElementById('error_task_btn') as HTMLInputElement;
 
+let timer = document.getElementById('timer') as HTMLInputElement;
+
 async function getTask() {
     let response_id = await fetch('http://127.0.0.1:8000/get_id_by_token/?token=' + localStorage.getItem('token'));
     let jsonId;
@@ -149,6 +151,39 @@ async function getTask() {
     }
 }
 
+function Timer() {
+    let minutes = Number(localStorage.getItem('minutes'));
+    let seconds = Number(localStorage.getItem('seconds'));
+
+    if (seconds < 60) {
+        seconds += 1;
+    } else {
+        minutes += 1;
+        seconds = 0;
+    }
+
+    let min;
+    let sec;
+
+    if (minutes < 10) {
+        min = '0' + minutes;
+    } else {
+        min = '' + minutes;
+    }
+
+    if (seconds < 10) {
+        sec = '0' + seconds;
+    } else {
+        sec = '' + seconds;
+    }
+
+    localStorage.setItem('minutes', min);
+    localStorage.setItem('seconds', sec);
+
+    timer.innerHTML = localStorage.getItem('minutes') + ':' + localStorage.getItem('seconds');
+}
+
+
 if ((JSON.parse(localStorage.getItem('task') || '{}').status === 'wait' && window.location.pathname === '/')
     || (JSON.parse(localStorage.getItem('task') || '{}').status === 'wait' && window.location.pathname === '/profile')) {
     putNotStartedStatus();
@@ -156,8 +191,13 @@ if ((JSON.parse(localStorage.getItem('task') || '{}').status === 'wait' && windo
     let now = new Date();
 
     let startDate = now.getFullYear() + '-' + (now.getMonth() + 1) + '-' + now.getDate();
-    let startTime = now.getHours() + ':' + now.getMinutes() + ":" + now.getMilliseconds();
-    
+    let startTime = now.getHours() + ':' + now.getMinutes() + ":" + now.getSeconds();
+
+    localStorage.setItem('minutes', '00');
+    localStorage.setItem('seconds', '00');
+
+    setInterval(() => Timer(), 1000);
+
     putStartDateTimeStatus(startDate, startTime);
 }
 
@@ -257,6 +297,8 @@ async function putEndDateTimeStatus(endDate: string, endTime: string) {
     if (response_date.ok && response_time.ok && response_status.ok) {
         localStorage.removeItem('tasks');
         localStorage.removeItem('task');
+        localStorage.removeItem('minutes');
+        localStorage.removeItem('seconds');
         window.location.pathname = '/';
     } else {
         alert('Ошибка HTTP: \n' + response_date.status + '\n' + response_time.status + '\n' + response_status.status);
@@ -292,6 +334,8 @@ async function putEndDateTimeStatusError(endDate: string, endTime: string) {
     if (response_date.ok && response_time.ok && response_status.ok) {
         localStorage.removeItem('tasks');
         localStorage.removeItem('task');
+        localStorage.removeItem('minutes');
+        localStorage.removeItem('seconds');
         window.location.pathname = '/';
     } else {
         alert('Ошибка HTTP: \n' + response_date.status + '\n' + response_time.status + '\n' + response_status.status);
