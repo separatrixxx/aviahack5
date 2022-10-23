@@ -13,10 +13,10 @@ TIME_SLEEP = 5
 
 def update_realtime_tasks():
     while widget.isVisible():
+        from_time = datetime.datetime.today().timestamp() - datetime.timedelta(minutes=60).total_seconds()
+        to_time = datetime.datetime.today().timestamp() + datetime.timedelta(minutes=60).total_seconds()
+        widget.realtime_tasks = database_tools.get_queries(from_time, to_time)["list"]
         if widget.tasks_in_realtime_action.isChecked() or widget.tasks_without_executor_action.isChecked():
-            from_time = datetime.datetime.today().timestamp() - datetime.timedelta(minutes=60).total_seconds()
-            to_time = datetime.datetime.today().timestamp() + datetime.timedelta(minutes=60).total_seconds()
-            widget.realtime_tasks = database_tools.get_queries(from_time, to_time)
             if widget.tasks_in_realtime_action.isChecked():
                 widget.show_realtime_tasks()
             else:
@@ -26,8 +26,8 @@ def update_realtime_tasks():
 
 def update_executors():
     while widget.isVisible():
+        widget.realtime_executors = database_tools.get_all_executors()["list"]
         if widget.executors_action.isChecked():
-            widget.realtime_executors = database_tools.get_all_executors()
             widget.show_executors()
         time.sleep(TIME_SLEEP)
 

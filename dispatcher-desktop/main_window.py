@@ -34,6 +34,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.statistics_action.setCheckable(True)
         self.slider = QtWidgets.QSlider(QtCore.Qt.Horizontal, self)
         self.slider.sliderReleased.connect(self.show_interval_tasks)
+        self.slider.sliderMoved.connect(self.change_time_label)
         self.slider.setMinimum(MIN_TIME)
         self.slider.setMaximum(MAX_TIME)
 
@@ -45,7 +46,8 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.tool_bar = self.addToolBar("Tools")
         self.tool_bar.setMovable(False)
-        self.tool_bar.addWidget(QtWidgets.QLabel(self))
+        self.time_label = QtWidgets.QLabel(self)
+        self.tool_bar.addWidget(self.time_label)
         self.tool_bar.addWidget(self.slider)
         self.tool_bar.addSeparator()
         self.tool_bar.addAction(self.tasks_in_realtime_action)
@@ -56,6 +58,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.tool_bar.addSeparator()
         self.tool_bar.addAction(self.statistics_action)
 
+        self.change_time_label(None)
         self.now_item_info = None
         self.realtime_tasks = []
         self.realtime_executors = []
@@ -64,20 +67,25 @@ class MainWindow(QtWidgets.QMainWindow):
     def show_realtime_tasks(self):
         self.central_widget.clear()
         for task in self.realtime_tasks:
-            self.create_item(f"Task №{task['id']} | executor №{task['bus_id']} | status {task['status']}", ItemType.TASK, task)
+            self.create_item(f"Task №{task['id']} | bus №{task['bus_id']} | status {task['status']} | time: {task['start_time']}-{task['end_time']}", ItemType.TASK, task)
 
     @QtCore.Slot()
     def show_without_executors_tasks(self):
         self.central_widget.clear()
         for task in self.realtime_tasks:
             if not task['bus_id']:
-                self.create_item(f"Task №{task['id']} | status {task['status']}", ItemType.TASK, task)
+                self.create_item(f"Task №{task['id']} | status {task['status']} | time: {task['start_time']}-{task['end_time']}", ItemType.TASK, task)
 
     @QtCore.Slot()
     def show_executors(self):
         self.central_widget.clear()
-        for task in self.realtime_executors:
-            self.create_item(f"Executor №{task['id']} | task №{task.get('task_id')} | status {task.get('status')}", ItemType.EXECUTOR, task)
+        for bus in self.realtime_executors:
+            bus_task = {}
+            for task in self.realtime_tasks:
+                if task["bus_id"] == bus['id']:
+                    bus_task = task
+                    break
+            self.create_item(f"Bus №{bus['id']} | task №{bus_task.get('id')} | status {bus_task.get('status')} | time: {bus_task.get('start_time')}-{bus_task.get('end_time')}", ItemType.EXECUTOR, bus)
 
     @QtCore.Slot()
     def show_statistics(self):
@@ -90,9 +98,16 @@ class MainWindow(QtWidgets.QMainWindow):
         self.tasks_without_executor_action.setChecked(False)
         self.executors_action.setChecked(False)
         self.statistics_action.setChecked(False)
-        tasks = database_tools.get_queries(self.slider.value(), MAX_TIME)
+        tasks = database_tools.get_queries(self.slider.value(), MAX_TIME)["list"]
         for task in tasks:
             self.create_item(f"Task №{task['id']} | executor №{task['bus_id']} | status {task['status']}", ItemType.TASK, task)
+
+    @QtCore.Slot(int)
+    def change_time_label(self, pos):
+        value = self.slider.value()
+        t = datetime.datetime.fromtimestamp(value)
+        t_max = datetime.datetime.fromtimestamp(MAX_TIME)
+        self.time_label.setText(f'{t.strftime("%Y-%m-%d %H:%M:%S")} -- {t_max.strftime("%Y-%m-%d %H:%M:%S")}')
 
     def create_item(self, id_item: str, item_type: ItemType, data):
         item = QtWidgets.QListWidgetItem(id_item)
