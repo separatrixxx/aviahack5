@@ -3,7 +3,7 @@ import {FaArrowLeft, FaRegUser} from 'react-icons/fa';
 
 function Header () {
 
-    if (window.location.pathname === '/profile') {
+    if (window.location.pathname === '/profile' || window.location.pathname === '/start') {
         return (
             <div className="flex items-center justify-between w-full absolute top-0 text-xs py-3 px-5 lg:px-7">
                 <a href="/" className="text-xl lg:text-2xl text-svo hover:bg-svo hover:text-white p-3

@@ -76,13 +76,23 @@ inputName?.addEventListener('keypress', function (e) {
 
 let token: any = localStorage.getItem('token');
 
-if (token !== null && window.location.pathname === '/') {
+if (token !== null && (window.location.pathname === '/' 
+    || window.location.pathname === '/start'
+    || window.location.pathname === '/end')) {
     getTask().then();
 }
 
 let dispatcherId = document.getElementById('dispatcher_id') as HTMLInputElement;
 let flightId = document.getElementById('flight_id') as HTMLInputElement;
 let status = document.getElementById('status') as HTMLInputElement;
+
+let dispatcherId_start = document.getElementById('dispatcher_id_start') as HTMLInputElement;
+let flightId_start = document.getElementById('flight_id_start') as HTMLInputElement;
+let status_start = document.getElementById('status_start') as HTMLInputElement;
+
+let acceptTaskBtn = document.getElementById('accept_task_btn') as HTMLInputElement;
+let endTaskBtn = document.getElementById('end_task_btn') as HTMLInputElement;
+let errorTaskBtn = document.getElementById('error_task_btn') as HTMLInputElement;
 
 async function getTask() {
     let response_id = await fetch('http://127.0.0.1:8000/get_id_by_token/?token=' + localStorage.getItem('token'));
@@ -106,12 +116,21 @@ async function getTask() {
 
     if (jsonTask.list.length !== 0) {
         for (let i of jsonTask.list) {
-            if (i.status === 'not_started') {
-                dispatcherId.innerHTML = i.dispatcher_id;
-                flightId.innerHTML = i.flight_id;
-                status.innerHTML = i.status;
+            if ((i.status === 'not_started' && window.location.pathname === '/') 
+                || (i.status === 'wait' && window.location.pathname === '/start')) {
+                if (window.location.pathname === '/') {
+                    dispatcherId.innerHTML = i.dispatcher_id;
+                    flightId.innerHTML = i.flight_id;
+                    status.innerHTML = 'Не начато';
+                } else if (window.location.pathname === '/start') {
+                    dispatcherId_start.innerHTML = i.dispatcher_id;
+                    flightId_start.innerHTML = i.flight_id;
+                    status_start.innerHTML = 'Ожидает выполнения';
+                }
+
                 localStorage.setItem('tasks', 'ok');
-                (document.getElementById('accept_task') as HTMLInputElement).classList.remove('hidden');
+                localStorage.setItem('task', JSON.stringify(i));
+                (document.getElementById('accept_task') as HTMLInputElement)?.classList.remove('hidden');
                 break;
             }
     
@@ -119,7 +138,7 @@ async function getTask() {
             flightId.innerHTML = '-';
             status.innerHTML = '-';
             localStorage.removeItem('tasks');
-            (document.getElementById('accept_task') as HTMLInputElement).classList.add('hidden');
+            (document.getElementById('accept_task_btn') as HTMLInputElement).classList.add('hidden');
         }
     } else {
             dispatcherId.innerHTML = '-';
@@ -130,4 +149,151 @@ async function getTask() {
     }
 }
 
+if ((JSON.parse(localStorage.getItem('task') || '{}').status === 'wait' && window.location.pathname === '/')
+    || (JSON.parse(localStorage.getItem('task') || '{}').status === 'wait' && window.location.pathname === '/profile')) {
+    putNotStartedStatus();
+} else if (JSON.parse(localStorage.getItem('task') || '{}').status === 'wait' && window.location.pathname === '/end') {
+    let now = new Date();
 
+    let startDate = now.getFullYear() + '-' + (now.getMonth() + 1) + '-' + now.getDate();
+    let startTime = now.getHours() + ':' + now.getMinutes() + ":" + now.getMilliseconds();
+    
+    putStartDateTimeStatus(startDate, startTime);
+}
+
+if (JSON.parse(localStorage.getItem('task') || '{}').status === 'in_progress' && window.location.pathname !== 'end') {
+    let now = new Date();
+
+    let endDate = now.getFullYear() + '-' + (now.getMonth() + 1) + '-' + now.getDate();
+    let endTime = now.getHours() + ':' + now.getMinutes() + ":" + now.getMilliseconds();
+    
+    putEndDateTimeStatusError(endDate, endTime);
+}
+
+acceptTaskBtn?.addEventListener('click', () => {
+    putWaitStatus();
+})
+
+async function putWaitStatus() {
+    let task = JSON.parse(localStorage.getItem('task') || '{}');
+
+    let response_status = await fetch('http://127.0.0.1:8000/put_status/?id=' + task.id + '&status=wait',
+    {
+        method: 'PUT'
+    });
+
+    if (response_status.ok) {
+        window.location.pathname = '/start';
+    } else {
+        alert('Ошибка HTTP: ' + response_status.status);
+    }
+}
+
+async function putNotStartedStatus() {
+    let task = JSON.parse(localStorage.getItem('task') || '{}');
+
+    let response_status = await fetch('http://127.0.0.1:8000/put_status/?id=' + task.id + '&status=not_started',
+    {
+        method: 'PUT'
+    });
+
+    if (response_status.ok) {
+        
+    } else {
+        alert('Ошибка HTTP: ' + response_status.status);
+    }
+}
+
+async function putStartDateTimeStatus(startDate: string, startTime: string) {
+    let task = JSON.parse(localStorage.getItem('task') || '{}');
+    let response_date = await fetch('http://127.0.0.1:8000/put_start_date/?id=' + task.id + '&start_date=' + startDate,
+    {
+        method: 'PUT'
+    });
+
+    let response_time = await fetch('http://127.0.0.1:8000/put_start_time/?id=' + task.id + '&start_time=' + startTime,
+    {
+        method: 'PUT'
+    });
+
+    let response_status = await fetch('http://127.0.0.1:8000/put_status/?id=' + task.id + '&status=in_progress',
+    {
+        method: 'PUT'
+    });
+
+    if (response_date.ok && response_time.ok && response_status.ok) {
+        
+    } else {
+        alert('Ошибка HTTP: \n' + response_date.status + '\n' + response_time.status + '\n' + response_status.status);
+    }
+}
+
+endTaskBtn?.addEventListener('click', () => {
+    let now = new Date();
+
+    let endDate = now.getFullYear() + '-' + (now.getMonth() + 1) + '-' + now.getDate();
+    let endTime = now.getHours() + ':' + now.getMinutes() + ":" + now.getMilliseconds();
+    
+    putEndDateTimeStatus(endDate, endTime);
+})
+
+async function putEndDateTimeStatus(endDate: string, endTime: string) {
+    let task = JSON.parse(localStorage.getItem('task') || '{}');
+    let response_date = await fetch('http://127.0.0.1:8000/put_end_date/?id=' + task.id + '&end_date=' + endDate,
+    {
+        method: 'PUT'
+    });
+
+    let response_time = await fetch('http://127.0.0.1:8000/put_end_time/?id=' + task.id + '&end_time=' + endTime,
+    {
+        method: 'PUT'
+    });
+
+    let response_status = await fetch('http://127.0.0.1:8000/put_status/?id=' + task.id + '&status=complete',
+    {
+        method: 'PUT'
+    });
+
+    if (response_date.ok && response_time.ok && response_status.ok) {
+        localStorage.removeItem('tasks');
+        localStorage.removeItem('task');
+        window.location.pathname = '/';
+    } else {
+        alert('Ошибка HTTP: \n' + response_date.status + '\n' + response_time.status + '\n' + response_status.status);
+    }
+}
+
+errorTaskBtn?.addEventListener('click', () => {
+    let now = new Date();
+
+    let endDate = now.getFullYear() + '-' + (now.getMonth() + 1) + '-' + now.getDate();
+    let endTime = now.getHours() + ':' + now.getMinutes() + ":" + now.getMilliseconds();
+    
+    putEndDateTimeStatusError(endDate, endTime);
+})
+
+async function putEndDateTimeStatusError(endDate: string, endTime: string) {
+    let task = JSON.parse(localStorage.getItem('task') || '{}');
+    let response_date = await fetch('http://127.0.0.1:8000/put_end_date/?id=' + task.id + '&end_date=' + endDate,
+    {
+        method: 'PUT'
+    });
+
+    let response_time = await fetch('http://127.0.0.1:8000/put_end_time/?id=' + task.id + '&end_time=' + endTime,
+    {
+        method: 'PUT'
+    });
+
+    let response_status = await fetch('http://127.0.0.1:8000/put_status/?id=' + task.id + '&status=error',
+    {
+        method: 'PUT'
+    });
+
+    if (response_date.ok && response_time.ok && response_status.ok) {
+        localStorage.removeItem('tasks');
+        localStorage.removeItem('task');
+        window.location.pathname = '/';
+    } else {
+        alert('Ошибка HTTP: \n' + response_date.status + '\n' + response_time.status + '\n' + response_status.status);
+    }
+}

@@ -23,10 +23,10 @@ function Tasks () {
                     <h1 id="status" className="text-svo text-base lg:text-lg ml-1">-</h1>
                 </div>
             </div>
-            <a href="/start" id="accept_task" className="flex items-center justify-center w-48 lg:w-72 h-12 lg:h-16 bg-svo text-white
-            rounded-2xl text-base lg:text-xl shadow-xl hover:scale-105 transition-all duration-500 easy-in-out">
-                Принять
-            </a>
+            <button id='accept_task_btn' className="flex items-center justify-center w-48 lg:w-72 h-12 lg:h-16 bg-svo text-white
+                rounded-2xl text-base lg:text-xl shadow-xl hover:scale-105 transition-all duration-500 easy-in-out">
+                    Принять
+            </button>
             <Footer />
         </div>
     );
