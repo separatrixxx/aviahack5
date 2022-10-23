@@ -103,9 +103,31 @@ async function getTask() {
         alert("Ошибка HTTP: " + response_task.status);
     }
 
-    dispatcherId.innerHTML = jsonTask.list[jsonTask.list.length - 1].dispatcher_id;
-    flightId.innerHTML = jsonTask.list[jsonTask.list.length - 1].flight_id;
-    status.innerHTML = jsonTask.list[jsonTask.list.length - 1].status;
+
+    if (jsonTask.list.length !== 0) {
+        for (let i of jsonTask.list) {
+            if (i.status === 'not_started') {
+                dispatcherId.innerHTML = i.dispatcher_id;
+                flightId.innerHTML = i.flight_id;
+                status.innerHTML = i.status;
+                localStorage.setItem('tasks', 'ok');
+                (document.getElementById('accept_task') as HTMLInputElement).classList.remove('hidden');
+                break;
+            }
+    
+            dispatcherId.innerHTML = '-';
+            flightId.innerHTML = '-';
+            status.innerHTML = '-';
+            localStorage.removeItem('tasks');
+            (document.getElementById('accept_task') as HTMLInputElement).classList.add('hidden');
+        }
+    } else {
+            dispatcherId.innerHTML = '-';
+            flightId.innerHTML = '-';
+            status.innerHTML = '-';
+            localStorage.removeItem('tasks');
+            (document.getElementById('accept_task') as HTMLInputElement).classList.add('hidden');
+    }
 }
 
 

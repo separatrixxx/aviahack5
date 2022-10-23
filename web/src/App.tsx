@@ -13,21 +13,36 @@ import {BrowserRouter as Router, Route, Routes} from "react-router-dom";
 function App() {
 
     let token: any = localStorage.getItem('token');
+    let tasks: any = localStorage.getItem('tasks');
 
     if (token !== null) {
-        return (
-            <div className="scroll-smooth bg-neutral-900">
-                <Router>
-                    <Routes>
-                        <Route path='/' element={<Tasks/>} />
-                        <Route path='/start' element={<Start/>} />
-                        <Route path='/end' element={<End/>} />
-                        <Route path='/profile' element={<Profile/>} />
-                        <Route path='*' element={<NotFound/>} />
-                    </Routes>
-                </Router>
-            </div>
-        );
+        if (tasks !== null) {
+            return (
+                <div className="scroll-smooth bg-neutral-900">
+                    <Router>
+                        <Routes>
+                            <Route path='/' element={<Tasks/>} />
+                            <Route path='/start' element={<Start/>} />
+                            <Route path='/end' element={<End/>} />
+                            <Route path='/profile' element={<Profile/>} />
+                            <Route path='*' element={<NotFound/>} />
+                        </Routes>
+                    </Router>
+                </div>
+            );
+        } else {
+            return (
+                <div className="scroll-smooth bg-neutral-900">
+                    <Router>
+                        <Routes>
+                            <Route path='/' element={<Tasks/>} />
+                            <Route path='/profile' element={<Profile/>} />
+                            <Route path='*' element={<NotFound/>} />
+                        </Routes>
+                    </Router>
+                </div>
+            );
+        }
     } else {
         return (
             <div className="scroll-smooth bg-neutral-900">
