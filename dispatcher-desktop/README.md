@@ -1,1 +1,2 @@
-Запуск python3 main.py
+#Запуск 
+python3 main.py
