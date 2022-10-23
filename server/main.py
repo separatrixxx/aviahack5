@@ -1,21 +1,12 @@
 from fastapi import FastAPI
 from fastapi.openapi.utils import get_openapi
 from fastapi.middleware.cors import CORSMiddleware
-from datetime import date, time
 
-
-from models.buses import Bus, Buses
-from models.dispatchers import Dispatcher, Dispatchers
-from models.flights import Flight, Flights
-from models.queries import Query, Queries
-
+from models import Movie
+from database import MovieDB
 
 app = FastAPI()
-buses = Buses()
-disp = Dispatchers()
-flights = Flights()
-que = Queries()
-
+mdb = MovieDB()
 
 origins = [
     "http://localhost"
@@ -34,306 +25,151 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
 @app.get('/')
 async def test():
 	return {"message": "success"}
 
-
-# Buses
-
-@app.post('/post_bus/')
-async def post_bus(bus: Bus):
-	buses.post_bus(bus)
+@app.post('/post_movie/')
+async def post_movie(mv: Movie):
+	mdb.post_movie(mv)
 	return {"message": "success"}
 
-
-@app.delete('/delete_bus/')
-async def delete_bus(id: int):
-	buses.delete_bus(id)
-	return {"message": "success"}
-
-
-@app.get('/get_bus/')
-async def get_bus(id: int):
-	res = buses.get_bus(id)
+@app.get('/get_movie/')
+async def get_movie(id: int):
+	res = mdb.get_movie_by_id(id)
 	return {
-		'id': res[0],
-		'capacity': res[1],
-		'token': res[2],
-		'position': res[3]
+		'title': res[0],
+		'description': res[1],
+		'id_kinopoisk': res[2],
+		'cover': res[3],
+		'premiere_date': res[4],
+		'country': res[5].split(', '),
+		'genres': res[6].split(', '),
+		'popularity': res[7],
+		'age': res[8],
+		'producer': res[9].split(', '),
+		'webtorrent': res[10]
 	}
 
+@app.delete('/delete_movie/')
+async def delete_movie(id: int):
+	mdb.delete_movie_by_id(id)
+	return {"message": "success"}
 
-@app.get('/get_all_buses/')
-async def get_all_buses():
-	many = buses.get_all_buses()
+@app.get('/get_movie_popular/')
+async def get_movie_popular(count: int):
+	many = mdb.get_movie_popular(count)
 	l = []
 	for res in many:
 		l.append(
 			{
-			'id': res[0],
-			'capacity': res[1],
-			'token': res[2],
-			'position': res[3]
+			'title': res[0],
+			'description': res[1],
+			'id_kinopoisk': res[2],
+			'cover': res[3],
+			'premiere_date': res[4],
+			'country': res[5].split(', '),
+			'genres': res[6].split(', '),
+			'popularity': res[7],
+			'age': res[8],
+			'producer': res[9].split(', '),
+			'webtorrent': res[10]
 			}
-			)
+		)
 	return {"list": l}
 
-
-@app.get('/get_id_by_token/')
-async def get_id_by_token(token: str):
-	res = buses.get_id_by_token(token)
-	return {
-		'id': res[0]
-	}
-
-# Dispatcher
-
-@app.post('/post_dispatcher/')
-async def post_dispatcher(dis: Dispatcher):
-	disp.post_dispatcher(dis)
-	return {"message": "success"}
-
-
-@app.delete('/delete_dispatcher/')
-async def delete_dispatcher(id: int):
-	disp.delete_dispatcher(id)
-	return {"message": "success"}
-
-
-@app.get('/get_dispatcher/')
-async def get_dispatcher(id: int):
-	res = disp.get_dispatcher(id)
-	return {
-		'id': res[0],
-		'token': res[1],
-		'name': res[2]
-	}
-
-
-# Flights
-
-@app.post('/post_flight/')
-async def post_flight(flight: Flight):
-	flights.post_flight(flight)
-	return {"message": "success"}
-
-
-@app.delete('/delete_flight/')
-async def delete_flight(id: int):
-	flights.delete_flight(id)
-	return {"message": "success"}
-
-
-@app.get('/get_flight/')
-async def get_flight(id: int):
-	res = flights.get_flight(id)
-	return {
-		'id': res[0],
-		'date': res[1],
-		'AD': res[2],
-		'terminal': res[3],
-		'ak_code': res[4],
-		'flight_number': res[5],
-		'time': res[6],
-		'ap_code': res[7],
-		'aeroport': res[8],
-		'BC_type': res[9],
-		'parking_place': res[10],
-		'gate_number': res[11],
-		'passengers_count': res[12]
-	}
-
-
-@app.get('/get_flight_number/')
-async def get_flight_number(id: int):
-	res = flights.get_flight_number(id)
-	return {
-		'flight_number': res[0]
-	}
-
-
-@app.get('/get_id_by_flight_number/')
-async def get_id_by_flight_number(fln: int):
-	res = flights.get_id_by_flight_number(fln)
-	return {
-		'id': res[0]
-	}
-
-
-@app.put('/put_date_time/')
-async def put_date_time(id: int, date: str, time: str):
-	flights.put_date_time(id, date, time)
-	return {"message": "success"}
-
-
-@app.put('/put_parking_place/')
-async def put_parking_place(id: int, parking_place: int):
-	flights.put_parking_place(id, parking_place)
-	return {"message": "success"}
-
-
-@app.put('/put_gate_number/')
-async def put_gate_number(id: int, gate_number: str):
-	flights.put_gate_number(id, gate_number)
-	return {"message": "success"}
-
-
-# Queries
-
-@app.get('/get_query/')
-async def get_query(id: int):
-	res = que.get_query(id)
-	return {
-		'id' : res[0],
-		'dispatcher_id' : res[1],
-		'flight_id' : res[2],
-		'bus_id' : res[3],
-		'status' : res[4],
-		'begin' : res[5],
-		'end' : res[6],
-		'start_date' : res[7],
-		'start_time' : res[8],
-		'end_date' : res[9],
-		'end_time' : res[10],
-		'passengers_count' : res[11]
-	}
-
-
-@app.post('/post_query/')
-async def post_query(q: Query):
-	que.post_query(q)
-	return {"message": "success"}
-
-
-@app.delete('/delete_query/')
-async def delete_query(id: int):
-	que.delete_query(id)
-	return {"message": "success"}
-
-
-@app.get('/get_all_queries_on_bus/')
-async def get_all_queries_on_bus(bus_id: int):
-	many = que.get_all_queries_on_bus(bus_id)
+@app.get('/get_movie_novelty/')
+async def get_movie_novelty(count: int):
+	many = mdb.get_movie_novelty(count)
 	l = []
 	for res in many:
 		l.append(
 			{
-			'id' : res[0],
-			'dispatcher_id' : res[1],
-			'flight_id' : res[2],
-			'bus_id' : res[3],
-			'status' : res[4],
-			'begin' : res[5],
-			'end' : res[6],
-			'start_date' : res[7],
-			'start_time' : res[8],
-			'end_date' : res[9],
-			'end_time' : res[10],
-			'passengers_count' : res[11]
+			'title': res[0],
+			'description': res[1],
+			'id_kinopoisk': res[2],
+			'cover': res[3],
+			'premiere_date': res[4],
+			'country': res[5].split(', '),
+			'genres': res[6].split(', '),
+			'popularity': res[7],
+			'age': res[8],
+			'producer': res[9].split(', '),
+			'webtorrent': res[10]
 			}
-			)
+		)
 	return {"list": l}
 
-
-@app.put('/put_start_time/')
-async def put_start_time (id: int, start_time: str):
-	que.put_start_time(id, start_time)
-	return {"message": "success"}
-
-
-@app.put('/put_start_date/')
-async def put_start_date (id: int, start_date: date):
-	que.put_start_date(id, start_date)
-	return {"message": "success"}
-
-
-
-@app.put('/put_begin/')
-async def put_begin (id: int, begin: int):
-	que.put_begin(id, begin)
-	return {"message": "success"}
-
-
-
-@app.put('/put_end/')
-async def put_end (id: int, end: int):
-	que.put_end(id, end)
-	return {"message": "success"}
-
-
-@app.get('/get_queries_in_time/')
-async def get_queries_in_time(begin_time: str, end_time: str, day: str):
-	many = que.get_queries_in_time(begin_time, end_time, day)
+@app.get('/get_movie_many/')
+async def get_movie_many(count: int):
+	many = mdb.get_movie_many(count)
 	l = []
 	for res in many:
 		l.append(
 			{
-			'id' : res[0],
-			'dispatcher_id' : res[1],
-			'flight_id' : res[2],
-			'bus_id' : res[3],
-			'status' : res[4],
-			'begin' : res[5],
-			'end' : res[6],
-			'start_date' : res[7],
-			'start_time' : res[8],
-			'end_date' : res[9],
-			'end_time' : res[10],
-			'passengers_count' : res[11]
+			'title': res[0],
+			'description': res[1],
+			'id_kinopoisk': res[2],
+			'cover': res[3],
+			'premiere_date': res[4],
+			'country': res[5].split(', '),
+			'genres': res[6].split(', '),
+			'popularity': res[7],
+			'age': res[8],
+			'producer': res[9].split(', '),
+			'webtorrent': res[10]
 			}
-			)
+		)
 	return {"list": l}
 
-
-@app.put('/put_status/')
-async def put_status (id: int, status: str):
-	que.put_status(id, status)
+@app.put('/update_popularity/')
+async def update_popularity(id: int, pop: int):
+	mdb.update_popularity(id, pop)
 	return {"message": "success"}
 
+@app.get('/get_movie_title/')
+async def get_movie_title(id: int):
+	res = mdb.get_movie_title(id)
+	return {"title": res[0]}
 
-@app.get('/get_all_queries/')
-async def get_all_queries():
-	many = que.get_all_queries()
+@app.get('/get_movie_webtorrent/')
+async def get_movie_webtorrent(id: int):
+	res = mdb.get_movie_webtorrent(id)
+	return {"webtorrent": res[0]}
+
+@app.get('/get_movie_by_title/')
+async def get_movie_by_title(title: str):
+	many = mdb.get_movie_by_title(title)
 	l = []
 	for res in many:
 		l.append(
 			{
-			'id' : res[0],
-			'dispatcher_id' : res[1],
-			'flight_id' : res[2],
-			'bus_id' : res[3],
-			'status' : res[4],
-			'begin' : res[5],
-			'end' : res[6],
-			'start_date' : res[7],
-  			'start_time' : res[8],
- 			'passengers_count' : res[9]
+			'title': res[0],
+			'description': res[1],
+			'id_kinopoisk': res[2],
+			'cover': res[3],
+			'premiere_date': res[4],
+			'country': res[5].split(', '),
+			'genres': res[6],
+			'popularity': res[7],
+			'age': res[8],
+			'producer': res[9].split(', '),
+			'webtorrent': res[10]
 			}
-			)
+		)
 	return {"list": l}
 
 
-@app.put('/put_passengers_count/')
-async def put_passengers_count (id: int, passengers_count: str):
-	que.put_passengers_count(id, passengers_count)
-	return {"message": "success"}
+def custom_openapi():
+	if app.openapi_schema:
+		return app.openapi_schema
+	openapi_schema = get_openapi(
+    	title="[ xd ]",
+		version="0.0.2",
+		description="Первая версия api к онлайн-кинотеатру [ xd ]",
+		routes=app.routes,
+	)
+	app.openapi_schema = openapi_schema
+	return app.openapi_schema
 
-
-@app.put('/put_end_time/')
-async def put_end_time (id: int, end_time: str):
-	que.put_end_time(id, end_time)
-	return {"message": "success"}
-
-
-@app.put('/put_end_date/')
-async def put_end_date (id: int, end_date: date):
-	que.put_end_date(id, end_date)
-	return {"message": "success"}
-
-
-@app.put('/put_bus/')
-async def put_bus (id: int, bus_id: int):
-	que.put_bus(id, bus_id)
-	return {"message": "success"}
+app.openapi = custom_openapi
