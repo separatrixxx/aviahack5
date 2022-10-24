@@ -132,15 +132,15 @@ async function getTask() {
 
                 localStorage.setItem('tasks', 'ok');
                 localStorage.setItem('task', JSON.stringify(i));
-                (document.getElementById('accept_task') as HTMLInputElement)?.classList.remove('hidden');
                 break;
             }
     
-            dispatcherId.innerHTML = '-';
-            flightId.innerHTML = '-';
-            status.innerHTML = '-';
+            if (dispatcherId !== null) {
+                dispatcherId.innerHTML = '-';
+                flightId.innerHTML = '-';
+                status.innerHTML = '-';
+            }
             localStorage.removeItem('tasks');
-            (document.getElementById('accept_task_btn') as HTMLInputElement).classList.add('hidden');
         }
     } else {
             dispatcherId.innerHTML = '-';
